@@ -14,10 +14,16 @@ for (const r of e.validate()) {
   check(r.mxlOk, `${r.id} MXL-R uptake ${r.mxl.toFixed(3)} vs MATLAB ${r.mxlMatlab.toFixed(3)}`);
 }
 
-// Published MNL willingness to pay (Table 4 of the manuscript), A$ per session
+// Published MNL willingness to pay (Table 3 of the manuscript), A$ per session
 const published = { 'caregiver: Yes': 17.5, 'type: Psychological counselling': 16.5, 'frequency: Weekly': 15.4,
   'distance: Wider community (50+ km)': -21.0 };
 const w = e.wtp('mnl');
+// Mixed logit mean WTP (MATLAB table6_wtp_main.csv: carer 15.44, counselling 15.98, weekly 14.41, 50 km+ -24.90)
+const wm = e.wtp('mxlr');
+for (const [param, val] of Object.entries({ 'caregiver: Yes': 15.44, 'type: Psychological counselling': 15.98, 'frequency: Weekly': 14.41, 'distance: Wider community (50+ km)': -24.90 })) {
+  const row = wm.find((x) => e.level(x.attribute, x.level).param === param);
+  check(Math.abs(row.point - val) < 0.06, `Mixed logit WTP ${row.label} ${row.point.toFixed(2)} vs MATLAB ${val}`);
+}
 for (const [param, val] of Object.entries(published)) {
   const row = w.find((x) => e.level(x.attribute, x.level).param === param);
   check(Math.abs(row.point - val) < 0.06, `WTP ${row.label} ${row.point.toFixed(2)} vs published ${val}`);
@@ -26,6 +32,9 @@ for (const [param, val] of Object.entries(published)) {
 // Feasible design space: 384 combinations of the six non-cost attributes x 4 prices = 1,536
 const n = e.allFeasibleDesigns(0).length;
 check(n * 4 === 1536, `feasible combinations ${n} x 4 prices = ${n * 4} (expected 1536)`);
+
+// Every example programme must be admissible under the design restrictions
+for (const sc of e.scenarios) check(e.isFeasible(sc.design), `${sc.id} is an admissible design`);
 
 // Reference programme uptake when free and at A$50 (MNL 0.74 and 0.52)
 const ref = { type: 'peer', carer: 'yes', mode: 'hybrid', frequency: 'weekly', duration: '2h', distance: 'local' };
