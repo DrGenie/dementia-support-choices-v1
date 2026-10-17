@@ -50,7 +50,7 @@ export const GLOSSARY = {
   },
   'never-free': {
     term: 'Would not take it even if free',
-    text: 'The share of simulated people who would still prefer no programme even if this one cost nothing. For them, the features of the programme are not the main barrier. Information, referral from a trusted health professional or a trial session may matter more.',
+    text: 'The share of simulated people whose underlying preference is for no programme even if this one cost nothing. Individual choices also have a chance element, so the share expected to turn down the free programme is somewhat larger. For them, the features of the programme are not the main barrier. Information, referral from a trusted health professional or a trial session may matter more.',
   },
   'lived-experience': {
     term: 'Lived experience',

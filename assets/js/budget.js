@@ -58,7 +58,7 @@ boot((engine) => {
     const refServed = Math.min(refP, inp.cap);
     const refRow = { design: refDesign, fee: 5, P: refP, served: refServed, W: refW * refServed / refP, subsidy: inp.refSub, cost: inp.refCost };
     out.replaceChildren(
-      stat('Best programme within the budget', b ? `${engine.label('type', b.design.type)}, ${priceLabel(b.fee).toLowerCase()}` : 'None fits', b ? describe(engine, { ...b.design, price: b.fee }) : 'Raise the budget or allow more programme types'),
+      stat('Highest value within the budget', b ? `${engine.label('type', b.design.type)}, ${priceLabel(b.fee).toLowerCase()}` : 'None fits', b ? describe(engine, { ...b.design, price: b.fee }) : 'Raise the budget or allow more programme types'),
       stat('Participants per year', b ? Math.round(b.served * inp.offered).toLocaleString('en-AU') : '-', b ? `${per100(b.P)} in 100 people offered would take it up` : ''),
       stat('Value to users per year', b ? money(yearly(b.W, inp.offered)) : '-', b ? `public spending ${money(yearly(b.subsidy, inp.offered))}` : ''),
     );
