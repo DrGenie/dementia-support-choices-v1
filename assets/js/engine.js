@@ -196,18 +196,54 @@ export class Engine {
   }
 
   // ------------------------------------------------------------ mixed logit (MXL-R)
+  // The preferred model is the MXL-R with piecewise-linear cost (knots A$5 and A$20,
+  // models.mxlrpw from data/model_v17.json). The linear-cost MXL-R (models.mxlr) is used
+  // when the piecewise export is absent.
   mxl() {
     if (this._mxl) return this._mxl;
-    const b = this.m.models.mxlr;
+    const pw = Boolean(this.m.models.mxlrpw);
+    const b = pw ? this.m.models.mxlrpw : this.m.models.mxlr;
     const K = b.params.length;
-    const ix = this.idx.mxlr;
-    this._mxl = { b, K, ix, asc: ix.get(ASC), cost: ix.get(COST), random: b.random, z: b.z };
+    const ix = new Map(b.params.map((p, i) => [p, i]));
+    const slopes = pw ? b.slopes.map((n) => ix.get(n)) : null;
+    this._mxl = { b, K, ix, pw, slopes, asc: ix.get(ASC), cost: pw ? null : ix.get(COST), random: b.random, z: b.z };
     return this._mxl;
   }
 
-  // For one (mean, sd) vector: per-person (V without cost) - constant, and the cost coefficient
+  // Utility of a fee p for fee slopes g = [A$0-5, A$5-20, A$20-50] (linear model: equal slopes)
+  static costU(g, p) {
+    return g[0] * Math.min(p, 5) + g[1] * Math.max(0, Math.min(p, 20) - 5) + g[2] * Math.max(0, p - 20);
+  }
+
+  static slopeAt(g, p) { return p < 5 ? g[0] : p < 20 ? g[1] : g[2]; }
+
+  // Fee at which a person with pre-fee utility x is indifferent (reservation fee); negative if
+  // the person would not take the programme even when free. Beyond A$50 the last slope is extended.
+  static reservation(x, g) {
+    if (x <= 0) return x / -g[0];
+    const knots = [0, 5, 20, 50];
+    for (let k = 0; k < 3; k++) {
+      const v1 = x + Engine.costU(g, knots[k + 1]);
+      if (v1 <= 0) return knots[k] + (x + Engine.costU(g, knots[k])) / -g[k];
+    }
+    return 50 + (x + Engine.costU(g, 50)) / -g[2];
+  }
+
+  // Fee-equivalent surplus of one person: area under the acceptance curve from the fee to A$50
+  static surplusL(x, g, p) {
+    const knots = [0, 5, 20, 50];
+    let w = 0;
+    for (let k = 0; k < 3; k++) {
+      const a = Math.max(p, knots[k]), b = knots[k + 1];
+      if (a >= b) continue;
+      w += (softplus(x + Engine.costU(g, a)) - softplus(x + Engine.costU(g, b))) / -g[k];
+    }
+    return w;
+  }
+
+  // For one (mean, sd) vector: per-person (V without cost) - constant, and the fee slopes g
   mxlBase(design, mean, sd) {
-    const { ix, asc, cost, random, z } = this.mxl();
+    const { ix, asc, cost, random, z, pw, slopes } = this.mxl();
     const on = this.activeParams(design).map((p) => ix.get(p));
     const n = z.length;
     const base = new Float64Array(n);
@@ -224,12 +260,20 @@ export class Engine {
       const a = mean[asc] + (zc.has(asc) ? sd[asc] * zi[zc.get(asc)] : 0);
       base[i] = v - a;
     }
-    return { base, bc: mean[cost] };
+    const g = pw ? slopes.map((k) => mean[k]) : [mean[cost], mean[cost], mean[cost]];
+    return { base, g };
   }
 
-  static meanLogistic(base, bc, price) {
+  static meanLogistic(base, g, price) {
+    const cu = Engine.costU(g, price);
     let s = 0;
-    for (let i = 0; i < base.length; i++) s += 1 / (1 + Math.exp(-(base[i] + bc * price)));
+    for (let i = 0; i < base.length; i++) s += 1 / (1 + Math.exp(-(base[i] + cu)));
+    return s / base.length;
+  }
+
+  static meanSurplus(base, g, price) {
+    let s = 0;
+    for (let i = 0; i < base.length; i++) s += Engine.surplusL(base[i], g, price);
     return s / base.length;
   }
 
@@ -237,13 +281,13 @@ export class Engine {
   uptakeMxl(design, nDraws = 1000) {
     const { b } = this.mxl();
     const pt = this.mxlBase(design, b.mean, b.sd);
-    const point = Engine.meanLogistic(pt.base, pt.bc, design.price);
+    const point = Engine.meanLogistic(pt.base, pt.g, design.price);
     if (nDraws === 0) return { point };
     const vals = [];
     const step = Math.max(1, Math.floor(b.draws_mean.length / nDraws));
     for (let r = 0; r < b.draws_mean.length; r += step) {
       const d = this.mxlBase(design, b.draws_mean[r], b.draws_sd[r]);
-      vals.push(Engine.meanLogistic(d.base, d.bc, design.price));
+      vals.push(Engine.meanLogistic(d.base, d.g, design.price));
     }
     return { point, ci: interval(vals) };
   }
@@ -257,15 +301,16 @@ export class Engine {
     for (let r = 0; r < b.draws_mean.length; r += step) bases.push(this.mxlBase(design, b.draws_mean[r], b.draws_sd[r]));
     const uptake = [], elasticity = [];
     for (const p of prices) {
-      const ptU = Engine.meanLogistic(pt.base, pt.bc, p);
-      const us = bases.map((d) => Engine.meanLogistic(d.base, d.bc, p));
+      const ptU = Engine.meanLogistic(pt.base, pt.g, p);
+      const us = bases.map((d) => Engine.meanLogistic(d.base, d.g, p));
       const [lo, hi] = interval(us);
       uptake.push({ price: p, point: ptU, lo, hi });
       const el = (d) => {
         let s = 0, P = 0;
+        const cu = Engine.costU(d.g, p), sl = Engine.slopeAt(d.g, p);
         for (let i = 0; i < d.base.length; i++) {
-          const q = 1 / (1 + Math.exp(-(d.base[i] + d.bc * p)));
-          s += d.bc * q * (1 - q); P += q;
+          const q = 1 / (1 + Math.exp(-(d.base[i] + cu)));
+          s += sl * q * (1 - q); P += q;
         }
         return P === 0 ? 0 : (s / d.base.length) * p / (P / d.base.length);
       };
@@ -298,7 +343,7 @@ export class Engine {
   reach(design) {
     const { b } = this.mxl();
     const pt = this.mxlBase(design, b.mean, b.sd);
-    const res = Array.from(pt.base, (x) => x / -pt.bc).sort((a, c) => a - c);
+    const res = Array.from(pt.base, (x) => Engine.reservation(x, pt.g)).sort((a, c) => a - c);
     const never = res.filter((x) => x < 0).length / res.length;
     return { neverShare: never, medianReservation: quantile(res, 0.5) };
   }
@@ -314,9 +359,10 @@ export class Engine {
   spread(design, hi = 0.8, lo = 0.2) {
     const { b } = this.mxl();
     const d = this.mxlBase(design, b.mean, b.sd);
+    const cu = Engine.costU(d.g, design.price);
     let likely = 0, unlikely = 0;
     for (let i = 0; i < d.base.length; i++) {
-      const p = 1 / (1 + Math.exp(-(d.base[i] + d.bc * design.price)));
+      const p = 1 / (1 + Math.exp(-(d.base[i] + cu)));
       if (p >= hi) likely++; else if (p < lo) unlikely++;
     }
     const n = d.base.length;
@@ -341,11 +387,12 @@ export class Engine {
     const { b } = this.mxl();
     const ba = this.mxlBase(designA, b.mean, b.sd);
     const bb = this.mxlBase(designB, b.mean, b.sd);
-    const n = ba.base.length; const bc = ba.bc;
+    const n = ba.base.length; const bc = Engine.slopeAt(ba.g, designA.price);
+    const cA = Engine.costU(ba.g, designA.price), cB = Engine.costU(bb.g, designB.price);
     let PA = 0, PB = 0, P0 = 0, dA = 0, d0 = 0;
     for (let i = 0; i < n; i++) {
-      const a = Math.exp(ba.base[i] + bc * designA.price);
-      const c = Math.exp(bb.base[i] + bc * designB.price);
+      const a = Math.exp(ba.base[i] + cA);
+      const c = Math.exp(bb.base[i] + cB);
       const s = 1 + a + c;
       const pa = a / s, pb = c / s, p0 = 1 / s;
       PA += pa; PB += pb; P0 += p0;
@@ -432,21 +479,18 @@ export class Engine {
 
 
   // ------------------------------------------------------------ benefits
-  // Expected consumer surplus per person offered, per session (A$), from the logsum
-  // (Small and Rosen 1981): the money value of having the programme available
-  // compared with no programme, net of the fee. Returned with take-up P for each
-  // parameter draw so that any benefit-cost measure can be given an interval.
+  // Expected consumer surplus per person offered, per session (A$), net of the fee. For the
+  // mixed logit with piecewise cost it is the fee-equivalent surplus: the area under each
+  // person's acceptance curve from the fee up to A$50, the highest fee in the study (a lower
+  // bound, with no extrapolation). For the fixed-coefficient models it is the logsum
+  // (Small and Rosen 1981). Returned with take-up P for each parameter draw so that any
+  // benefit-cost measure can be given an interval.
   valueDraws(modelName, design, nDraws = 200) {
     if (modelName === 'mxlr') {
       const { b } = this.mxl();
       const one = (mean, sd) => {
         const d = this.mxlBase(design, mean, sd);
-        let P = 0, CS = 0;
-        for (let i = 0; i < d.base.length; i++) {
-          const x = d.base[i] + d.bc * design.price;
-          P += 1 / (1 + Math.exp(-x)); CS += softplus(x);
-        }
-        return { P: P / d.base.length, CS: CS / d.base.length / -d.bc };
+        return { P: Engine.meanLogistic(d.base, d.g, design.price), CS: Engine.meanSurplus(d.base, d.g, design.price) };
       };
       const point = one(b.mean, b.sd);
       const step = Math.max(1, Math.floor(b.draws_mean.length / nDraws));
@@ -508,11 +552,7 @@ export class Engine {
     const step = Math.max(1, Math.floor(b.draws_mean.length / nDraws));
     const sets = [this.mxlBase(design, b.mean, b.sd)];
     for (let r = 0; r < b.draws_mean.length; r += step) sets.push(this.mxlBase(design, b.draws_mean[r], b.draws_sd[r]));
-    const val = (d, p) => {
-      let P = 0, CS = 0;
-      for (let i = 0; i < d.base.length; i++) { const x = d.base[i] + d.bc * p; P += 1 / (1 + Math.exp(-x)); CS += softplus(x); }
-      return { P: P / d.base.length, CS: CS / d.base.length / -d.bc };
-    };
+    const val = (d, p) => ({ P: Engine.meanLogistic(d.base, d.g, p), CS: Engine.meanSurplus(d.base, d.g, p) });
     return prices.map((p) => ({ point: val(sets[0], p), draws: sets.slice(1).map((d) => val(d, p)) }));
   }
 
@@ -532,12 +572,89 @@ export class Engine {
     return { percentile, level, best: pool[pool.length - 1], worst: pool[0], median: quantile(pool, 0.5) };
   }
 
+  // ------------------------------------------------------------ provider cost and budget
+  // Provider cost per participant per session (A$) from the CHSP 2025-26 national unit price
+  // ranges (group social support per client-hour; specialised support services per hour;
+  // transport per one-way trip) and two labelled assumptions: the added cost of including
+  // the carer and the cost of virtual delivery. scen: 'low' | 'central' | 'high' | 'funded'
+  // ('funded' uses CHSP grant expenditure per unit delivered in 2024-25, from GEN).
+  // Virtual reality has no CHSP counterpart (returns null). Mirrors prog_cost.m.
+  programmeCost(design, scen = 'central') {
+    const c = this.m.chsp; if (!c) return null;
+    const s = { low: 0, central: 1, high: 2, funded: 3 }[scen];
+    const sa = s === 3 ? 1 : s;                  // 'funded': CHSP grant expenditure per unit, central assumptions
+    const pick = (r, f) => [r[0], (r[0] + r[1]) / 2, r[1], f][s];
+    const hours = HOURS_PER_SESSION[design.duration];
+    let base;
+    if (design.type === 'peer' || design.type === 'community') base = pick(c.group_social_support, c.funded_group) * hours;
+    else if (design.type === 'counselling') base = pick(c.specialised_support, c.funded_specialised) * hours;
+    else return null;
+    const carer = design.carer === 'yes' ? base * c.carer_share[sa] : 0;
+    const vf = design.mode === 'virtual' ? c.virtual_factor[sa] : 1;
+    const trips = design.distance === 'wider' ? (design.mode === 'inperson' ? 2 : design.mode === 'hybrid' ? 1 : 0) : 0;
+    return (base + carer) * vf + trips * pick(c.transport_trip, c.funded_transport);
+  }
+
+  // Weekly designs with a CHSP cost benchmark (the budget planner's choice set)
+  budgetDesigns(types = ['peer', 'community', 'counselling']) {
+    return this.allFeasibleDesigns(0).filter((d) => d.frequency === 'weekly' && types.includes(d.type));
+  }
+
+  // Acceptance and fee-equivalent surplus (to A$50) of each design at each fee, point estimates
+  budgetGrid(designs, fees) {
+    const { b } = this.mxl();
+    return designs.map((d) => {
+      const x = this.mxlBase(d, b.mean, b.sd);
+      return { design: d, P: fees.map((p) => Engine.meanLogistic(x.base, x.g, p)), W: fees.map((p) => Engine.meanSurplus(x.base, x.g, p)) };
+    });
+  }
+
+  /**
+   * Budget-constrained choice of one programme design and fee (mirrors plan_budget.m).
+   * opts: { budgetPerPersonSession, cap (share of people offered with a place, default 1),
+   *         scen ('central'), types, fees (default 0:0.5:50), grid (from budgetGrid, optional) }
+   * Maximises users' expected surplus subject to participants x (cost - fee) <= budget,
+   * fee <= min(cost, A$50); with a capacity limit, places are rationed at random among
+   * those who accept. Returns the best design and fee, the design with the highest
+   * acceptance and the design with the highest surplus (no budget limit).
+   */
+  planBudget(opts) {
+    const fees = opts.fees || Array.from({ length: 101 }, (_, i) => i / 2);
+    const cap = opts.cap ?? 1;
+    const grid = opts.grid || this.budgetGrid(this.budgetDesigns(opts.types), fees);
+    let best = null, accMax = null, wMax = null;
+    for (const g of grid) {
+      const c = this.programmeCost(g.design, opts.scen || 'central');
+      if (c == null) continue;
+      fees.forEach((p, j) => {
+        if (p > Math.min(c, 50) + 1e-12) return;
+        const P = g.P[j], served = Math.min(P, cap);
+        const W = g.W[j] * served / Math.max(P, 1e-300);
+        const sub = served * (c - p);
+        const row = { design: { ...g.design, price: p }, fee: p, P, served, W, subsidy: sub, cost: c };
+        if (!accMax || P > accMax.P) accMax = row;
+        if (!wMax || W > wMax.W) wMax = row;
+        if (sub <= opts.budgetPerPersonSession + 1e-12 && (!best || W > best.W)) best = row;
+      });
+    }
+    return { best, accMax, wMax, grid, fees };
+  }
+
   // Check that this engine reproduces the MATLAB results stored in the export
   validate() {
-    return this.scenarios.map((s) => {
+    const chk = this.m.checkV17 && this.m.models.mxlrpw ? this.m.checkV17.scenarios : null;
+    return this.scenarios.map((s, i) => {
       const mnl = this.uptakeFixed('mnl', s.design, { point: true }).point;
       const keep = this.retention(s.design).point;
       const mxl = this.uptakeMxl(s.design, 0).point;
+      if (chk) {
+        return {
+          id: s.id, name: s.name, feasible: this.isFeasible(s.design),
+          mnl, mnlMatlab: s.matlab.uptake_mnl, mnlOk: Math.abs(mnl - s.matlab.uptake_mnl) < 1e-4,
+          keep, keepMatlab: s.matlab.keep_seq, keepOk: Math.abs(keep - s.matlab.keep_seq) < 1e-4,
+          mxl, mxlMatlab: chk.acceptance[i], mxlOk: Math.abs(mxl - chk.acceptance[i]) < 1e-6,
+        };
+      }
       return {
         id: s.id, name: s.name, feasible: this.isFeasible(s.design),
         mnl, mnlMatlab: s.matlab.uptake_mnl, mnlOk: Math.abs(mnl - s.matlab.uptake_mnl) < 1e-4,
@@ -548,8 +665,22 @@ export class Engine {
   }
 }
 
-export async function loadEngine(url = 'data/model.json') {
+export async function loadEngine(url = 'data/model.json', urlV17 = 'data/model_v17.json') {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Could not load ${url} (${res.status})`);
-  return new Engine(await res.json());
+  const model = await res.json();
+  try {
+    const r2 = await fetch(urlV17);
+    if (r2.ok) mergeV17(model, await r2.json());
+  } catch (e) { /* the linear-cost model is used */ }
+  return new Engine(model);
+}
+
+// Add the preferred piecewise-cost mixed logit, the CHSP cost inputs and the MATLAB checks
+export function mergeV17(model, v17) {
+  model.models.mxlrpw = v17.mxlrpw;
+  model.chsp = v17.chsp;
+  model.checkV17 = v17.check;
+  model.metaV17 = v17.meta;
+  return model;
 }

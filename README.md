@@ -35,8 +35,10 @@ assets/js/glossary.js        plain-language definitions used by the (i) buttons 
 assets/js/home.js, families.js, plan.js, value.js, fees.js, research.js   page code
 assets/fonts/                Atkinson Hyperlegible and Source Serif 4 (SIL OFL)
 assets/img/                  logo and favicon
-data/model.json              model estimates and parameter draws exported from MATLAB
+data/model.json              comparison models (MNL, sequential, latent class) exported from MATLAB
+data/model_v17.json          preferred model (mixed logit, piecewise fee), CHSP costs and check values
 matlab/export_tool_json.m    script that writes data/model.json from the analysis results
+matlab/export_tool_v17.m     script that writes data/model_v17.json (package stage 23.97)
 tests/validate.mjs           checks the engine against the MATLAB results
 .github/workflows/pages.yml  runs the tests, then deploys to GitHub Pages
 ```
@@ -71,19 +73,15 @@ python3 -m http.server 8000
 
 ## Update the model
 
-1. In MATLAB, from the root of the analysis package, run:
+1. In MATLAB, run the analysis package (stage 23.97 writes `outputs/tool/model_v17.json`; `export_tool_json` writes `model.json` for the comparison models).
+2. Copy `model_v17.json` (and, if it changed, `model.json`) into `data/`.
+3. Run `npm test` (Node 18 or later). `node tests/check_table.mjs > tool_check_v17.csv` writes the comparison used in the Online Appendix.
 
-   ```matlab
-   export_tool_json('outputs/results', 'outputs/tool/model.json')
-   ```
-
-   The script stops with an error if the exported values do not reproduce the saved MATLAB results.
-2. Copy the new `model.json` into `data/`.
-3. Run `npm test` (Node 18 or later) and commit. The website reads everything from this one file, so no other change is needed.
+The `data/model_v17.json` in this release comes from a quick check of the package with 100 simulation draws; replace it with the file from the final run (2,000 draws) before publishing.
 
 ## Tests
 
-`npm test` checks that the browser engine reproduces, for the eight example programmes, the MATLAB values for logit take-up and retention (to 0.0001) and mixed logit take-up (to 0.01, the simulation error), the published willingness-to-pay values, the size of the permitted design space (1,536 combinations), the reference programme's take-up at A$0 and A$50, the diversion ratio, the share who would not take a free programme, and the consumer surplus values from the MATLAB welfare analysis.
+`npm test` checks that the browser engine reproduces values written by the package from the same estimates and simulated people: acceptance and welfare of the eight example programmes (to 0.000001), the fee table of the reference programme, the share who would not use it if free, diversion to no programme, provider costs under every cost scenario and the budget planner's choices; and, for the comparison models, logit take-up, retention, published willingness to pay, the size of the permitted design space and consumer surplus.
 
 ## Accessibility
 
