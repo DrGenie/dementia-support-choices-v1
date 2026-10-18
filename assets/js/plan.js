@@ -113,6 +113,7 @@ boot((engine) => {
     const bca = Engine.bca(val, design, engine.sessionsPerYear(design), { offered: 1, providerCost: null });
     const el1 = engine.elasticityMxl(design, 120);
     const never = engine.reach({ ...design, price: 0 }).neverShare;
+    const notFree = 1 - engine.uptakeMxl({ ...design, price: 0 }, 0).point;
     const r = engine.rating(design);
     const items = engine.improvements(design);
     const k = per100(mx.point);
@@ -133,16 +134,16 @@ boot((engine) => {
       top && top.gain >= 0.01
         ? `The feature holding it back most is ${top.label.toLowerCase()}: changing "${top.current}" to "${top.best}" would add about ${(100 * top.gain).toFixed(1)} in 100.${design.price > 0 ? ` Making it free would add ${(100 * priceItem.gain).toFixed(1)} in 100.` : ''}`
         : `No single change to the features would add 1 in 100 or more, so the design is close to the best the study allows${design.price > 0 ? ` at this fee. Making it free would add ${(100 * priceItem.gain).toFixed(1)} in 100` : ''}.`,
-      `About ${per100(never)} in 100 people would not use it even if it were free. Reaching them depends more on referral and information than on the design.`,
-      `Each person offered the programme gains about ${money(val.point.CS)} per session in value, after the fee. It passes a benefit-cost test if it costs less than ${money(bca.breakEven)} per participant per session to run.`,
+      `Even if it were free, about ${per100(notFree)} in 100 people would be predicted not to choose it, and about ${per100(never)} in 100 prefer no programme on average. These are survey choices, not fixed unwillingness; referral and information may reach them better than design changes.`,
+      `Each person offered the programme gains about ${money(val.point.CS)} per session in stated value after the fee, counted up to A$50 per session. Its stated value exceeds its cost if it costs less than ${money(bca.breakEven)} per participant per session to run; this is a cautious screening figure.`,
     ]);
 
     // Key figures
     document.getElementById('stats').replaceChildren(
-      stat('Value to families', money(val.point.CS), `per person offered per session (${money(bca.ci.surplusPerOfferedSession[0])} to ${money(bca.ci.surplusPerOfferedSession[1])})`, 'value'),
+      stat('Stated value to families', money(val.point.CS), `per person offered per session (${money(bca.ci.surplusPerOfferedSession[0])} to ${money(bca.ci.surplusPerOfferedSession[1])})`, 'value'),
       stat('Break-even running cost', money(bca.breakEven), 'per participant per session', 'break-even'),
       stat('Price sensitivity', design.price === 0 ? 'None at a zero fee' : el1.point.toFixed(2), design.price === 0 ? 'set a fee to see it' : `a 10% fee rise lowers take-up by ${Math.abs(10 * el1.point).toFixed(1)}%`, 'elasticity'),
-      stat('Would not take it even if free', `${per100(never)} in 100`, 'whatever the fee', 'never-free'),
+      stat('Prefer no programme even if free', `${per100(never)} in 100`, `${per100(notFree)} in 100 predicted not to choose it when free`, 'never-free'),
     );
     setContext('take-up', () => `${k} in 100 people would choose this programme over no programme.`);
     setContext('interval', () => `take-up is between ${per100(mx.ci[0])} and ${per100(mx.ci[1])} in 100, a ${mx.ci[1] - mx.ci[0] < 0.1 ? 'fairly narrow' : 'wide'} range.`);
@@ -183,7 +184,7 @@ boot((engine) => {
       el('p', { class: 'prose' }, sp.unsure >= 0.35
         ? `A large undecided group means design, fees and how the programme is promoted can still move take-up a good deal.`
         : `The undecided group is fairly small, so further design changes will move take-up only a little.`),
-      el('p', { class: 'prose' }, `Most of the differences between people in the study were about whether to use any programme at all, rather than which features they wanted. About ${per100(never)} in 100 would not use this programme even if it were free. A trusted referral, clear information and a trial session are more likely to reach them than changes to the programme. Differences by lived experience of dementia are described on `, el('a', { href: 'research.html#methods' }, 'the research page'), '.'),
+      el('p', { class: 'prose' }, `Most of the differences between people in the study were about whether to use any programme at all, rather than which features they wanted. About ${per100(never)} in 100 prefer no programme even when this one is free, and about ${per100(notFree)} in 100 are predicted not to choose it when free. A trusted referral, clear information and a trial session are more likely to reach them than changes to the programme. Differences by lived experience of dementia are described on `, el('a', { href: 'research.html#methods' }, 'the research page'), '.'),
     );
     setContext('likely', () => `${per100(sp.likely)} likely, ${per100(sp.unsure)} undecided and ${per100(sp.unlikely)} unlikely, out of 100.`);
 

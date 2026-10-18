@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Benefits and costs | Dementia Support Choices</title>
-  <meta name="description" content="Compare the money value of a dementia support programme to the people who use it with the cost of running it, with a traffic-light benefit-cost verdict and uncertainty.">
+  <meta name="description" content="Compare the stated value of a dementia support programme to the people offered it with the cost of running it, with uncertainty and the limits of the comparison.">
   <meta name="theme-color" content="#3b2550">
   <meta property="og:title" content="Benefits and costs | Dementia Support Choices">
-  <meta property="og:description" content="Compare the money value of a dementia support programme to the people who use it with the cost of running it, with a traffic-light benefit-cost verdict and uncertainty.">
+  <meta property="og:description" content="Compare the stated value of a dementia support programme to the people offered it with the cost of running it, with uncertainty and the limits of the comparison.">
   <meta property="og:type" content="website">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -71,7 +71,7 @@
         <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> / <span aria-current="page">Benefits and costs</span></nav>
 <span class="audience">For funders, policy makers and service providers</span>
 <h1>Benefits and costs</h1>
-        <p class="lead">Compare the value of a programme to the people who use it with what it costs to run. Choose a programme, enter your running cost, and the page gives a benefit-cost verdict, explains it, and shows how firm it is.</p>
+        <p class="lead">Compare the stated value of a programme to the people offered it with what it costs to run. Choose a programme and enter a running cost; the page compares the two, explains the result and shows how firm it is. Stated value is counted only up to A$50 per session, so this is a screening comparison, not a full benefit-cost test.</p>
       </div>
     </div>
     <div class="wrap">
@@ -103,13 +103,13 @@
               </div>
               <div class="field" id="cost-field">
                 <label for="cost">Provider cost per participant per session (A$)</label>
-                <span class="hint">Staff time, venue, materials and transport, divided by the number of participants in a session. <button type="button" class="info" data-term="running-cost" aria-expanded="false" aria-label="What running cost means"><span aria-hidden="true">i</span></button></span>
+                <span class="hint">Staff time, venue, materials and transport, divided by the number of participants in a session. National unit prices are funding benchmarks, not measured costs. <button type="button" class="info" data-term="running-cost" aria-expanded="false" aria-label="What running cost means"><span aria-hidden="true">i</span></button></span>
                 <input type="number" id="cost" min="0" step="1" inputmode="decimal" placeholder="For example 50">
                 <div class="quickbtns" id="cost-quick" role="group" aria-label="Quick choices for provider cost"></div>
               </div>
               <fieldset id="share-field">
                 <legend>How much of the stated value to count</legend>
-                <span class="hint">Counting less tests whether the verdict holds if people overstated what they would pay. <button type="button" class="info" data-term="benefit-share" aria-expanded="false" aria-label="What the share of stated value counted means"><span aria-hidden="true">i</span></button></span>
+                <span class="hint">Counting less tests whether the result holds if people overstated what they would pay. <button type="button" class="info" data-term="benefit-share" aria-expanded="false" aria-label="What the share of stated value counted means"><span aria-hidden="true">i</span></button></span>
                 <div class="choices" id="share-choices">
                   <label><input type="radio" name="share" value="1" checked> All of it</label>
                   <label><input type="radio" name="share" value="0.75"> Three quarters</label>
@@ -134,25 +134,25 @@
 
       <div class="folds">
       <details class="fold" id="details-fold">
-        <summary><h2>Full calculation</h2><span class="fold-hint">Every figure behind the verdict, with 95% intervals.</span></summary>
+        <summary><h2>Full calculation</h2><span class="fold-hint">Every figure behind the result, with 95% intervals.</span></summary>
         <div class="fold-body">
           <dl class="stats" id="more-stats" style="margin-top:0"></dl>
           <div class="table-scroll" id="bca-table"></div>
         </div>
       </details>
       <details class="fold" id="sensitivity" open>
-        <summary><h2>How the result changes with the running cost</h2><span class="fold-hint">The benefit-cost ratio for running costs from A$20 to A$200.</span></summary>
+        <summary><h2>How the result changes with the running cost</h2><span class="fold-hint">The ratio of stated value to cost for running costs from A$20 to A$200.</span></summary>
         <div class="fold-body">
           <div id="cost-chart"></div>
-          <p class="small muted">Above the dashed line at 1, benefits exceed costs. The shaded band is the 95% interval. Move the pointer over the chart to read values.</p>
+          <p class="small muted">Above the dashed line at 1, stated value exceeds cost. The shaded band is the 95% interval. Move the pointer over the chart to read values.</p>
           <div id="cost-text"></div>
         </div>
       </details>
       <details class="fold" id="fee-fold">
-        <summary><h2>How the result changes with the fee</h2><span class="fold-hint">Net benefit per year for fees from free to A$50.</span></summary>
+        <summary><h2>How the result changes with the fee</h2><span class="fold-hint">Stated value minus cost per year for fees from free to A$50.</span></summary>
         <div class="fold-body">
           <div id="fee-chart"></div>
-          <p class="small muted">A fee moves money from participants to the provider, so it changes net benefit only through the number of people who take part.</p>
+          <p class="small muted">A fee moves money from participants to the provider, so it changes stated value minus cost only through the number of people who take part.</p>
           <div id="fee-text"></div>
         </div>
       </details>
@@ -170,12 +170,12 @@
         <summary><h2>How the numbers are calculated</h2></summary>
         <div class="fold-body">
           <div class="prose">
-            <h3>Benefit to participants</h3>
-            <p>For each person offered the programme, the mixed logit choice model <button type="button" class="info" data-term="model" aria-expanded="false" aria-label="What the choice model means"><span aria-hidden="true">i</span></button> gives the money value of having the programme available compared with no programme, net of the fee. Economists call this consumer surplus; it is calculated from all the choice probabilities at once (the "logsum"). It is measured per session, because fees and values in the study were per session. The yearly benefit is this value multiplied by the number of people offered and the number of sessions in a year, plus the fees participants pay.</p>
-            <h3>Costs, fees and net benefit</h3>
-            <p>The running cost is the provider cost per participant per session multiplied by the expected number of participants and sessions. Fees are paid by participants to the provider, so they appear on both sides and cancel out of the net benefit to society. The benefit-cost ratio is the total benefit to participants, including fees, divided by the running cost.</p>
-            <h3>Traffic lights</h3>
-            <p>Green: the whole 95% interval for the benefit-cost ratio is above 1. Amber: the interval includes 1, so the result is uncertain. Red: the whole interval is below 1.</p>
+            <h3>Stated value to participants</h3>
+            <p>For each person offered the programme, the mixed logit choice model <button type="button" class="info" data-term="model" aria-expanded="false" aria-label="What the choice model means"><span aria-hidden="true">i</span></button> gives the chance that they would choose it at each fee. Adding up these chances from the actual fee to A$50, the highest fee in the study, gives the stated value: the most, in fees, that people would give up to keep the programme, counted only over the fees they saw in the survey. It is measured per person offered and per session, compared with having no programme, and net of the fee. It is not complete consumer surplus: value above A$50 per session is left out, and in the study extending the fee effect beyond A$50 raised the value of a typical programme three to four times. Reading it as dollars of income also assumes that people value a dollar of fee like any other dollar; the first dollars of a fee reduced choices much more than later ones, so this is an assumption, not a finding. The yearly figure is this value multiplied by the number of people offered and the number of sessions in a year, plus the fees participants pay.</p>
+            <h3>Costs, fees and the comparison</h3>
+            <p>The running cost is the provider cost per participant per session multiplied by the expected number of participants and sessions. If you use the national unit prices of the Commonwealth Home Support Programme, remember that they are funding benchmarks, not the cost of an extra participant. Fees are paid by participants to the provider, so they appear on both sides and cancel out of stated value minus cost. The ratio is the total stated value to participants, including fees, divided by the running cost.</p>
+            <h3>Reading the result</h3>
+            <p>The result says whether the whole 95% interval of the ratio is above 1, includes 1, or is below 1. It is shown without traffic-light colours because the stated value is a cautious, partial measure and costs are inputs, so the comparison is a screening figure rather than a pass or fail test.</p>
             <h3>What is not included</h3>
             <p>The benefit is what respondents valued about the programme when choosing for a loved one. Health effects people were not aware of, effects on carers' paid work, and savings to other services are not counted. The analysis covers one year, assumes participants attend every session, and assumes everyone offered the programme makes one decision about it. Values stated in a survey can be higher than what people would pay in practice <button type="button" class="info" data-term="hypothetical-bias" aria-expanded="false" aria-label="What hypothetical bias means"><span aria-hidden="true">i</span></button>.</p>
           </div>

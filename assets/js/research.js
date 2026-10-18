@@ -30,7 +30,7 @@ boot((engine) => {
     el('p', {}, `Relative importance shows each feature's share of the total difference in appeal across the levels tested. Cost had the largest share (${pct(ri.find((r) => r.key === 'cost').point)}), which reflects the wide range of fees tested (free to A$50).`),
     el('p', {}, `Features people would clearly pay for (95% interval above zero) were ${positive.map((r) => `${r.label.toLowerCase()} (${money(r.point)})`).join(', ')}. Travel to the wider community was the strongest dislike, at ${money(w.find((r) => r.level === 'wider').point)} per session compared with a programme at home.`),
     el('h3', {}, 'Differences between people'),
-    el('p', {}, `Most of the variation between people concerned whether to choose any programme at all: the standard deviation of the preference for choosing no programme was ${Math.abs(sdOf('ASC opt-out')).toFixed(2)}, much larger than for any feature. This is why about one in five people would not use even a well-designed free programme.`),
+    el('p', {}, `Most of the variation between people concerned whether to choose any programme at all: the standard deviation of the preference for choosing no programme was ${Math.abs(sdOf('ASC opt-out')).toFixed(2)}, much larger than for any feature. This is why, for a well-designed free programme, about one in five people prefer no programme on average and about one in four are predicted not to choose it. These figures describe survey choices, not a fixed unwillingness to use support. Measured characteristics such as age, income, health and experience of dementia explained only about 6% of these differences, although people with caring responsibilities were somewhat more likely to accept support.`),
   );
 
   // Supporting analyses
@@ -45,12 +45,12 @@ boot((engine) => {
   });
   document.getElementById('supporting').replaceChildren(
     el('h4', {}, 'Keeping a programme once chosen (sequential model)'),
-    el('p', {}, 'People gave up a chosen programme at the second question mainly when it was unattractive, and allowing the second answer its own preferences did not improve the fit. Combining the two answers into one choice gave willingness-to-pay values within about A$5 of the sequential model.'),
+    el('p', {}, 'People gave up a chosen programme at the second question mainly when it was unattractive, and allowing the second answer its own preferences did not improve the fit. Combining the two answers into one choice gave willingness-to-pay values within about A$5 of the sequential model. The two approaches rank programmes almost identically but differ in levels: the sequential model predicts higher take-up for a programme offered on its own (for a weekly local peer support group including the carer, about 77 rather than 71 in 100 at A$5).'),
     el('div', { class: 'table-scroll' }, el('table', {}, el('caption', {}, 'Share who would keep the example programmes once chosen'),
       el('thead', {}, el('tr', {}, el('th', { scope: 'col' }, 'Programme'), el('th', { scope: 'col', class: 'num' }, 'Keep it'), el('th', { scope: 'col', class: 'num' }, '95% interval'))),
       el('tbody', {}, ...keepRows))),
     el('h4', {}, 'Lived experience'),
-    el('p', {}, `Carer inclusion was worth about ${money(carerFreq.point)} per session to people in daily or weekly contact with someone living with dementia (95% interval ${money(carerFreq.ci[0])} to ${money(carerFreq.ci[1])}), compared with ${money(carerNone.point)} (${money(carerNone.ci[0])} to ${money(carerNone.ci[1])}) for people without lived experience. Income, age, physical health and knowing someone with dementia did not change the trade-offs.`),
+    el('p', {}, `Carer inclusion was worth about ${money(carerFreq.point)} per session to people in daily or weekly contact with someone living with dementia (95% interval ${money(carerFreq.ci[0])} to ${money(carerFreq.ci[1])}), compared with ${money(carerNone.point)} (${money(carerNone.ci[0])} to ${money(carerNone.ci[1])}) for people without lived experience. This difference is exploratory: its 95% interval includes zero and it did not remain significant after allowing for the number of comparisons made. Income, age, physical health and knowing someone with dementia did not change the trade-offs.`),
     el('h4', {}, 'Two groups of people (latent class model)'),
     el('p', {}, `A larger group (${pct(lc.share[0])} of people) rarely chose no programme and was less sensitive to price. A smaller group (${pct(lc.share[1])}) often chose no programme and was more sensitive to price. The mixed logit captures the same pattern as a continuous spread rather than two groups, and fitted better.`),
     el('h4', {}, 'The shape of the price effect (piecewise cost model)'),
@@ -85,6 +85,8 @@ boot((engine) => {
       el('td', { class: 'num' }, `${r.keep.toFixed(4)} / ${r.keepMatlab.toFixed(4)}`), el('td', {}, ok(r.keepOk)))))));
 
   const meta = engine.m.meta;
+  const m17 = engine.m.metaV17;
   document.getElementById('model-meta').textContent =
-    `Model file exported ${meta.created || ''}${meta.matlab_version ? ` from MATLAB ${meta.matlab_version.split(' ')[1] || meta.matlab_version}` : ''}; ${meta.R} parameter draws and ${meta.n_individuals} simulated people.`;
+    (m17 ? `Preferred model file (model_v17.json) exported ${m17.created || ''} from ${m17.platform || 'MATLAB'}; ${m17.draws} estimation draws, ${m17.R} parameter draws and ${m17.n_individuals} simulated people. ` : '') +
+    `Comparison models file (model.json) exported ${meta.created || ''}${meta.matlab_version ? ` from MATLAB ${meta.matlab_version.split(' ')[1] || meta.matlab_version}` : ''}.`;
 });

@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Glossary | Dementia Support Choices</title>
-  <meta name="description" content="Plain-language explanations of the terms used on Dementia Support Choices, from take-up and 95% intervals to willingness to pay, benefit-cost ratios and the mixed logit model.">
+  <meta name="description" content="Plain-language explanations of the terms used on Dementia Support Choices, from take-up and 95% intervals to willingness to pay, stated value and the mixed logit model.">
   <meta name="theme-color" content="#3b2550">
   <meta property="og:title" content="Glossary | Dementia Support Choices">
-  <meta property="og:description" content="Plain-language explanations of the terms used on Dementia Support Choices, from take-up and 95% intervals to willingness to pay, benefit-cost ratios and the mixed logit model.">
+  <meta property="og:description" content="Plain-language explanations of the terms used on Dementia Support Choices, from take-up and 95% intervals to willingness to pay, stated value and the mixed logit model.">
   <meta property="og:type" content="website">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -93,8 +93,8 @@
           <dd>For each feature, the tool tries every other option allowed with the rest of the design and reports the one that raises take-up most. Green means the current choice is already the best or within 1 in 100 of it. Amber means a gain of 1 to 5 in 100. Red means a gain of more than 5 in 100, so that feature is holding the programme back.</dd>
           <dt id="likely">Likely, undecided and unlikely users</dt>
           <dd>The choice model simulates 1,000 people who differ in their preferences, as the people in the study did. For each simulated person it gives their own chance of choosing the programme. "Likely" means a chance of 80% or more, "unlikely" less than 20%, and "undecided" anything in between. Undecided people are the ones most affected by design changes, fees and how the programme is promoted.</dd>
-          <dt id="never-free">Would not take it even if free</dt>
-          <dd>The share of simulated people whose underlying preference is for no programme even if this one cost nothing. Individual choices also have a chance element, so the share expected to turn down the free programme is somewhat larger. For them, the features of the programme are not the main barrier. Information, referral from a trusted health professional or a trial session may matter more.</dd>
+          <dt id="never-free">Prefer no programme even if free</dt>
+          <dd>The share of simulated people whose usual preference is for no programme even when this one costs nothing (about 20 in 100 for a weekly local peer support group that includes the carer). Single choices also have a chance element, so the share predicted not to choose the free programme is larger (about 25 in 100 for the same group). Neither figure describes people who would never use support: both refer to the programmes and the hypothetical setting of the survey. For this group, the features of the programme are not the main barrier; information, referral from a trusted health professional or a trial session may matter more.</dd>
           <dt id="elasticity">Price sensitivity (elasticity)</dt>
           <dd>How much take-up changes when the fee changes. A price sensitivity of -0.3 means a 10% rise in the fee reduces take-up by about 3%. Values closer to zero mean people are less put off by price.</dd>
           <dt id="diversion">Where people go when a fee rises</dt>
@@ -111,21 +111,21 @@
         <h2>Money and value</h2>
         <dl class="glossary-list">
           <dt id="wtp">Willingness to pay</dt>
-          <dd>The amount of money per session that would make people equally happy with a programme before and after a change in one feature. For example, if including the carer is worth A$15 per session, people would accept a fee about A$15 higher for a programme that includes the carer. A negative value means people would need to be compensated for that feature.</dd>
-          <dt id="value">Value to families</dt>
-          <dd>How much better off people are, in dollars, from being offered a programme compared with having no programme, after paying any fee. It is averaged over everyone offered the programme, including those who would not use it. Economists call this consumer surplus.</dd>
+          <dd>The amount of money per session that would make people equally happy with a programme before and after a change in one feature. For example, if including the carer is worth A$15 per session, people would accept a fee about A$15 higher for a programme that includes the carer. A negative value means people would need to be compensated for that feature. Money values depend on the fee range used: the first dollars of a fee weighed about 4.5 times as much as dollars between A$20 and A$50, so a value converted at the low-fee rate is much smaller than one converted at the high-fee rate. The values shown use one average fee effect.</dd>
+          <dt id="value">Stated value to families</dt>
+          <dd>How much better off people say they are, in fee dollars per session, from being offered a programme compared with having no programme, after paying any fee. It is averaged over everyone offered the programme, including those who would not use it. It counts value only up to A$50 per session, the highest fee in the study, so it is a cautious, partial measure and not complete consumer surplus. Reading it as dollars of income assumes that people value a dollar of fee like any other dollar.</dd>
           <dt id="running-cost">Running cost</dt>
-          <dd>What it costs a provider to deliver one session to one participant: staff time, venue, materials and transport, divided by the number of participants in the session. The study did not measure running costs, so you enter your own.</dd>
+          <dd>What it costs a provider to deliver one session to one participant: staff time, venue, materials and transport, divided by the number of participants in the session. The study did not measure running costs, so you enter your own. National unit prices are funding benchmarks, not the cost of serving an extra participant.</dd>
           <dt id="break-even">Break-even running cost</dt>
-          <dd>The running cost per participant per session at which the value of a programme to the people who use it equals the cost of providing it. A programme that costs less than this to run returns more value than it costs.</dd>
-          <dt id="bcr">Benefit-cost ratio</dt>
-          <dd>The value of a programme to participants divided by the cost of running it. A ratio above 1 means the programme returns more value than it costs; below 1 means it costs more than the value it returns. A ratio of 1.5 means every dollar spent returns A$1.50 in value.</dd>
-          <dt id="net-benefit">Net benefit</dt>
-          <dd>The value of a programme to participants minus the cost of running it, over a year. A positive net benefit means the programme is worth more than it costs. Fees paid by participants go to the provider, so they do not change the net benefit to society.</dd>
+          <dd>The running cost per participant per session at which the value of a programme to the people who use it equals the cost of providing it. If a programme costs less than this to run, its stated value exceeds its cost.</dd>
+          <dt id="bcr">Ratio of stated value to cost</dt>
+          <dd>The stated value of a programme to participants divided by the cost of running it. A ratio above 1 means the stated value exceeds the cost; below 1 means the cost is higher. A ratio of 1.5 means every dollar of running cost is matched by A$1.50 of stated value. Because stated value is counted only up to A$50 per session and costs are inputs, the ratio is a screening figure, not a full benefit-cost test.</dd>
+          <dt id="net-benefit">Stated value minus cost</dt>
+          <dd>The stated value of a programme to participants minus the cost of running it, over a year. A positive figure means the stated value exceeds the cost. Fees paid by participants go to the provider, so they do not change the net benefit to society.</dd>
           <dt id="benefit-share">Share of stated value counted</dt>
           <dd>People can say they value something more in a survey than they would pay in practice. Counting only three quarters or half of the stated value tests whether a conclusion still holds if survey answers overstate real value.</dd>
           <dt id="hypothetical-bias">Hypothetical bias</dt>
-          <dd>The tendency for people to say they value something more in a survey than they would pay in real life. The benefit-cost page lets you count only part of the stated value to test this.</dd>
+          <dd>The tendency for people to say they value something more in a survey than they would pay in real life. The benefits and costs page lets you count only part of the stated value to test this.</dd>
         </dl>
       </section>
       <section id="how-the-study-and-the-models-work">

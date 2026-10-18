@@ -149,7 +149,7 @@ function renderSummary(target, answers, engine, quiet) {
   const get = (p) => w.find((x) => engine.level(x.attribute, x.level).param === p);
   const carerAns = answers.find((a) => a.key === 'carer');
   if (carerAns.prefs.includes('yes')) {
-    notes.push(`You are not alone in wanting the carer included. It was one of the features people in our study valued most, at about ${money(get('caregiver: Yes').point)} per session, and even more among people in regular contact with someone living with dementia.`);
+    notes.push(`You are not alone in wanting the carer included. It was one of the features people in our study valued most, at about ${money(get('caregiver: Yes').point)} per session, and possibly more among people in regular contact with someone living with dementia. About one in three people, though, preferred a programme designed for the person with dementia alone, so both kinds of programme are worth asking about.`);
   }
   const dist = answers.find((a) => a.key === 'distance');
   if (dist.prefs.includes('home') || dist.prefs.includes('local')) {
@@ -262,7 +262,7 @@ boot((engine) => {
   const frequent = engine.carerValueByProfile({ frequentContact: true });
   document.getElementById('others-text').replaceChildren(
     el('p', {}, `${names[byRank[0].key]} made the biggest difference across the range tested (cost ran from free to A$50 per session), followed by ${names[byRank[1].key].toLowerCase()} and ${names[byRank[2].key].toLowerCase()}. The features people would pay most for were ${topPay.map((r) => `${r.label.toLowerCase()} (about ${money(r.point)} per session)`).join(', ')}.`),
-    el('p', {}, `A supporting analysis found that people in daily or weekly contact with someone living with dementia valued carer inclusion at about ${money(frequent.point)} per session, compared with about ${money(carerOnly.point)} for people without that experience.`));
+    el('p', {}, `A supporting analysis found that people in daily or weekly contact with someone living with dementia valued carer inclusion at about ${money(frequent.point)} per session, compared with about ${money(carerOnly.point)} for people without that experience. This difference is uncertain and should be read as a possibility, not a firm finding.`));
   const top3 = byRank.slice(0, 3);
   setContext('importance', () => `the three features that mattered most were ${top3.map((r) => `${names[r.key].toLowerCase()} (${pct(r.point)})`).join(', ')}.`);
 });

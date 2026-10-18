@@ -66,7 +66,8 @@ boot((engine) => {
         : level === 'green' ? 'That is a small loss: the fee is unlikely to be the main barrier for this programme.'
           : level === 'amber' ? 'That is a moderate loss. If reaching as many people as possible matters, consider a fee waiver for people who would otherwise miss out.'
             : 'That is a large loss. A lower fee, a waiver or funded places would reach noticeably more people.',
-      el('span', {}, 'The fee mostly affects people who are undecided. People who would not use any programme are not reached by lowering the fee; see ', el('a', { href: '#reach' }, 'who a programme will not reach'), '.'),
+      'The first few dollars of a fee reduced choices the most. The survey tested no fee between free and A$5, so it cannot tell whether free services have a special appeal or whether people are simply most sensitive to small charges.',
+      el('span', {}, 'The fee mostly affects people who are undecided. People who prefer no programme are not reached by lowering the fee; see ', el('a', { href: '#reach' }, 'who a programme will not reach'), '.'),
     ]);
     const firstElastic = c.elasticity.find((p) => p.point <= -1);
     meaning(document.getElementById('elasticity-text'), null, [
@@ -144,6 +145,7 @@ boot((engine) => {
   function updateReach() {
     const d = programme();
     const r = engine.reach({ ...d, price: 0 });
+    const notFree = 1 - engine.uptakeMxl({ ...d, price: 0 }, 0).point;
     const sp = engine.spread(d);
     const seg = (cls, share) => el('span', { class: cls, style: `width:${(100 * share).toFixed(1)}%` }, share >= 0.08 ? String(per100(share)) : '');
     document.getElementById('reach-text').replaceChildren(
@@ -157,12 +159,12 @@ boot((engine) => {
     );
     const box = el('div');
     meaning(box, r.neverShare > 0.3 ? 'red' : r.neverShare > 0.2 ? 'amber' : 'green', [
-      el('span', {}, `About ${per100(r.neverShare)} in 100 people would not take up the ${name()} even if it were free. `, infoBtn('never-free', 'would not take it even if free')),
+      el('span', {}, `Even if the ${name()} were free, about ${per100(notFree)} in 100 people would be predicted not to choose it, and about ${per100(r.neverShare)} in 100 prefer no programme on average. These describe survey choices, not a fixed unwillingness to use support. `, infoBtn('never-free', 'prefer no programme even if free')),
       r.medianReservation > 50 ? 'For half the population it is worth more than A$50 per session, the highest fee tested.' : `For half the population it is worth at least ${money(Math.max(0, r.medianReservation))} per session.`,
       'Most of the differences between people in the study were about whether to use any programme at all, rather than which features they wanted. Programme design alone is unlikely to reach this group; a trusted referral, clear information and a trial session may matter more.',
     ]);
     document.getElementById('reach-text').append(box);
-    setContext('never-free', () => `${per100(r.neverShare)} in 100 for the ${name()}.`);
+    setContext('never-free', () => `${per100(r.neverShare)} in 100 for the ${name()}; ${per100(notFree)} in 100 are predicted not to choose it when free.`);
     setContext('likely', () => `${per100(sp.likely)} likely, ${per100(sp.unsure)} undecided and ${per100(sp.unlikely)} unlikely, out of 100.`);
   }
 

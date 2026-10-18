@@ -18,27 +18,27 @@ export const GLOSSARY = {
   },
   wtp: {
     term: 'Willingness to pay',
-    text: 'The amount of money per session that would make people equally happy with a programme before and after a change in one feature. For example, if including the carer is worth A$15 per session, people would accept a fee about A$15 higher for a programme that includes the carer. A negative value means people would need to be compensated for that feature.',
+    text: 'The amount of money per session that would make people equally happy with a programme before and after a change in one feature. For example, if including the carer is worth A$15 per session, people would accept a fee about A$15 higher for a programme that includes the carer. A negative value means people would need to be compensated for that feature. Money values depend on the fee range used: the first dollars of a fee weighed about 4.5 times as much as dollars between A$20 and A$50, so a value converted at the low-fee rate is much smaller than one converted at the high-fee rate. The values shown use one average fee effect.',
   },
   value: {
-    term: 'Value to families',
-    text: 'How much better off people are, in dollars, from being offered a programme compared with having no programme, after paying any fee. It is averaged over everyone offered the programme, including those who would not use it. Economists call this consumer surplus.',
+    term: 'Stated value to families',
+    text: 'How much better off people say they are, in fee dollars per session, from being offered a programme compared with having no programme, after paying any fee. It is averaged over everyone offered the programme, including those who would not use it. It counts value only up to A$50 per session, the highest fee in the study, so it is a cautious, partial measure and not complete consumer surplus. Reading it as dollars of income assumes that people value a dollar of fee like any other dollar.',
   },
   'break-even': {
     term: 'Break-even running cost',
-    text: 'The running cost per participant per session at which the value of a programme to the people who use it equals the cost of providing it. A programme that costs less than this to run returns more value than it costs.',
+    text: 'The running cost per participant per session at which the value of a programme to the people who use it equals the cost of providing it. If a programme costs less than this to run, its stated value exceeds its cost.',
   },
   'running-cost': {
     term: 'Running cost',
-    text: 'What it costs a provider to deliver one session to one participant: staff time, venue, materials and transport, divided by the number of participants in the session. The study did not measure running costs, so you enter your own.',
+    text: 'What it costs a provider to deliver one session to one participant: staff time, venue, materials and transport, divided by the number of participants in the session. The study did not measure running costs, so you enter your own. National unit prices are funding benchmarks, not the cost of serving an extra participant.',
   },
   bcr: {
-    term: 'Benefit-cost ratio',
-    text: 'The value of a programme to participants divided by the cost of running it. A ratio above 1 means the programme returns more value than it costs; below 1 means it costs more than the value it returns. A ratio of 1.5 means every dollar spent returns A$1.50 in value.',
+    term: 'Ratio of stated value to cost',
+    text: 'The stated value of a programme to participants divided by the cost of running it. A ratio above 1 means the stated value exceeds the cost; below 1 means the cost is higher. A ratio of 1.5 means every dollar of running cost is matched by A$1.50 of stated value. Because stated value is counted only up to A$50 per session and costs are inputs, the ratio is a screening figure, not a full benefit-cost test.',
   },
   'net-benefit': {
-    term: 'Net benefit',
-    text: 'The value of a programme to participants minus the cost of running it, over a year. A positive net benefit means the programme is worth more than it costs. Fees paid by participants go to the provider, so they do not change the net benefit to society.',
+    term: 'Stated value minus cost',
+    text: 'The stated value of a programme to participants minus the cost of running it, over a year. A positive figure means the stated value exceeds the cost. Fees paid by participants go to the provider, so they do not change the net benefit to society.',
   },
   elasticity: {
     term: 'Price sensitivity (elasticity)',
@@ -49,8 +49,8 @@ export const GLOSSARY = {
     text: 'In each survey question, people first chose the better of two programmes, then said whether they would still use it if they could choose neither. "Keep it once chosen" is the share who stayed with their choice at that second step. It comes from a supporting analysis (a sequential model) reported on the research page.',
   },
   'never-free': {
-    term: 'Would not take it even if free',
-    text: 'The share of simulated people whose underlying preference is for no programme even if this one cost nothing. Individual choices also have a chance element, so the share expected to turn down the free programme is somewhat larger. For them, the features of the programme are not the main barrier. Information, referral from a trusted health professional or a trial session may matter more.',
+    term: 'Prefer no programme even if free',
+    text: 'The share of simulated people whose usual preference is for no programme even when this one costs nothing (about 20 in 100 for a weekly local peer support group that includes the carer). Single choices also have a chance element, so the share predicted not to choose the free programme is larger (about 25 in 100 for the same group). Neither figure describes people who would never use support: both refer to the programmes and the hypothetical setting of the survey. For this group, the features of the programme are not the main barrier; information, referral from a trusted health professional or a trial session may matter more.',
   },
   'lived-experience': {
     term: 'Lived experience',
@@ -114,7 +114,7 @@ export const GLOSSARY = {
   },
   'hypothetical-bias': {
     term: 'Hypothetical bias',
-    text: 'The tendency for people to say they value something more in a survey than they would pay in real life. The benefit-cost page lets you count only part of the stated value to test this.',
+    text: 'The tendency for people to say they value something more in a survey than they would pay in real life. The benefits and costs page lets you count only part of the stated value to test this.',
   },
 };
 

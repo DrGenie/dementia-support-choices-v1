@@ -332,6 +332,7 @@ footer.site .legal { grid-column: 1 / -1; border-top: 1px solid rgba(255, 255, 2
 .light-green { color: #155f3c; border-color: #1e7a4f; background: #e7f4ec; } .light-green::before { background: #1e7a4f; }
 .light-amber { color: #6e4800; border-color: #e0a100; background: #fdf3d9; } .light-amber::before { background: #f2b705; }
 .light-red { color: #8c1d17; border-color: #b3261e; background: #fbe9e7; } .light-red::before { background: #b3261e; }
+.light-neutral { color: #1f3f6b; border-color: #5b7aa6; background: #eef3fa; } .light-neutral::before { background: #5b7aa6; }
 .verdict { border: 2px solid var(--line); border-left-width: 10px; border-radius: var(--radius); padding: 1.1rem 1.3rem; margin: 0 0 1.2rem; }
 .verdict h3 { margin: 0.5rem 0 0.4rem; }
 .verdict p:last-child { margin-bottom: 0; }

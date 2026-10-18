@@ -8,13 +8,17 @@ const COST_CHOICES = [25, 50, 75, 100, 150];
 const OFFERED_CHOICES = [100, 1000, 10000];
 const SHARE_WORD = { 1: 'all of the stated value', 0.75: 'three quarters of the stated value', 0.5: 'half of the stated value' };
 
+// Classification of the 95% interval of the ratio. It is shown in neutral colours, not as a
+// pass or fail verdict: stated value is counted only up to A$50 per session and provider
+// costs are user inputs or funding benchmarks, so the ratio is a screening figure.
 const lightOf = (r) => {
   if (r.bcr == null) return null;
   if (r.ci.bcr[0] >= 1) return 'green';
   if (r.ci.bcr[1] < 1) return 'red';
   return 'amber';
 };
-const LIGHT_WORD = { green: 'Benefits exceed costs', amber: 'Uncertain', red: 'Costs exceed benefits' };
+const LIGHT_WORD = { green: 'Stated value above cost', amber: 'Interval includes 1', red: 'Stated value below cost' };
+const CAVEAT = 'Stated value is counted only up to A$50 per session, the highest fee in the study, so it is not complete consumer surplus; in the study, extending it beyond A$50 raised the value of a typical programme three to four times. Provider costs are your inputs or funding benchmarks, not measured costs. Read the ratio as a screening figure, not a full benefit-cost test.';
 const whole = (x) => Math.round(x).toLocaleString('en-AU');
 
 boot((engine) => {
@@ -31,7 +35,7 @@ boot((engine) => {
   const steps = progress(document.getElementById('progress'), [
     { id: 'programme', label: 'Choose a programme', href: '#builder' },
     { id: 'cost', label: 'Enter a running cost', href: '#cost-field' },
-    { id: 'verdict', label: 'Read the verdict', href: '#result' },
+    { id: 'verdict', label: 'Read the result', href: '#result' },
     { id: 'sensitivity', label: 'Test a lower value', href: '#share-field' },
     { id: 'compare', label: 'Compare with another programme', href: '#compare' },
     { id: 'share', label: 'Print or share', href: '#result' },
@@ -101,7 +105,7 @@ boot((engine) => {
   cost.addEventListener('change', () => {
     state.cost = cost.value === '' ? null : Math.max(0, +cost.value);
     const r = update();
-    if (state.cost == null) { toast({ level: 'amber', title: 'Running cost cleared', message: 'Enter a cost per participant per session to see the verdict.' }); return; }
+    if (state.cost == null) { toast({ level: 'amber', title: 'Running cost cleared', message: 'Enter a cost per participant per session to see the result.' }); return; }
     steps.mark('cost'); steps.mark('verdict');
     tellVerdict(r, `Running cost: ${money(state.cost)} per participant per session`);
   });
@@ -113,7 +117,7 @@ boot((engine) => {
     if (now.bca.bcr == null) toast({ level: 'info', title: `Counting ${label}`, message: `The break-even running cost is now ${money(now.bca.breakEven)} per participant per session.` });
     else {
       const changed = before && lightOf(before.bca) !== lightOf(now.bca);
-      tellVerdict(now, `Counting ${label}`, changed ? 'The verdict changed, so the conclusion depends on how much of the stated value is real.' : 'The verdict did not change, so the conclusion holds under this assumption.');
+      tellVerdict(now, `Counting ${label}`, changed ? 'The reading changed, so the conclusion depends on how much of the stated value is real.' : 'The reading did not change, so the conclusion holds under this assumption.');
     }
   }));
 
@@ -159,29 +163,31 @@ boot((engine) => {
     if (light) {
       const half = state.share > 0.5 ? Engine.bca(value, design, s, opts({ benefitShare: 0.5 })) : null;
       const gap = bca.breakEven - state.cost;
-      v.className = `verdict verdict-${light}`;
-      lines.push(el('span', { class: `light light-${light}` }, LIGHT_WORD[light]));
+      v.className = 'verdict';
+      lines.push(el('span', { class: 'light light-neutral' }, LIGHT_WORD[light]));
       lines.push(el('h3', {}, light === 'amber'
-        ? `Each dollar spent returns about ${money(bca.bcr, 2)}, but the result is uncertain`
-        : `Each dollar spent returns about ${money(bca.bcr, 2)} in value to participants`));
-      lines.push(el('p', {}, `Of ${state.offered.toLocaleString('en-AU')} people offered this programme, about ${whole(bca.participants)} would take part. Over a year, the value to them is ${money(bca.benefit)} and the running cost is ${money(bca.cost)}, a net benefit of ${money(bca.net)}. Allowing for uncertainty in the estimates, there is a ${pct(bca.pPositive)} chance that benefits exceed costs.`));
+        ? `Each dollar of running cost is matched by about ${money(bca.bcr, 2)} of stated value, but the interval includes 1`
+        : `Each dollar of running cost is matched by about ${money(bca.bcr, 2)} of stated value to participants`));
+      lines.push(el('p', {}, `Of ${state.offered.toLocaleString('en-AU')} people offered this programme, about ${whole(bca.participants)} would take part. Over a year, the stated value to them is ${money(bca.benefit)} and the running cost is ${money(bca.cost)}, a difference of ${money(bca.net)}. Allowing for uncertainty in the estimates, there is a ${pct(bca.pPositive)} chance that stated value exceeds cost.`));
       lines.push(el('p', {}, gap >= 0
         ? `Your running cost of ${money(state.cost)} is ${money(gap)} below the break-even cost of ${money(bca.breakEven)} per participant per session, so there is ${gap / bca.breakEven > 0.3 ? 'a comfortable' : 'only a small'} margin.`
         : `Your running cost of ${money(state.cost)} is ${money(-gap)} above the break-even cost of ${money(bca.breakEven)} per participant per session. Lowering the cost or raising take-up through design would be needed.`));
       if (half) {
         const hl = lightOf(half);
         lines.push(el('p', {}, hl === light
-          ? `If people valued the programme at only half what they said, the ratio would be ${half.bcr.toFixed(2)} and the verdict would not change.`
-          : `If people valued the programme at only half what they said, the ratio would fall to ${half.bcr.toFixed(2)} and the verdict would become "${LIGHT_WORD[hl].toLowerCase()}". Treat the result with some caution.`));
+          ? `If people valued the programme at only half what they said, the ratio would be ${half.bcr.toFixed(2)} and the reading would not change.`
+          : `If people valued the programme at only half what they said, the ratio would fall to ${half.bcr.toFixed(2)} and the reading would become "${LIGHT_WORD[hl].toLowerCase()}". Treat the result with some caution.`));
       }
+      lines.push(el('p', { class: 'small' }, CAVEAT));
       lines.push(el('p', { class: 'small' }, el('strong', {}, 'Next: '), light === 'green' ? 'compare with another programme, or print the analysis to share.'
         : light === 'amber' ? `check your running cost; the programme breaks even at ${money(bca.breakEven)} per participant per session.`
           : 'try a design with higher take-up in the planner, or a lower running cost.'));
     } else {
       v.className = 'verdict';
       lines.push(el('h3', {}, `It breaks even at ${money(bca.breakEven)} per participant per session`));
-      lines.push(el('p', {}, `If this programme costs less than ${money(bca.breakEven)} per participant per session to run (${rng(bca.ci.breakEven, money)}), it returns more value to participants than it costs. This needs no cost information, so it is a useful first check.`));
-      lines.push(el('p', { class: 'small' }, el('strong', {}, 'Next: '), 'enter your running cost, or choose one of the amounts above, to get the full verdict.'));
+      lines.push(el('p', {}, `If this programme costs less than ${money(bca.breakEven)} per participant per session to run (${rng(bca.ci.breakEven, money)}), its stated value to participants exceeds its cost. This needs no cost information, so it is a useful first check.`));
+      lines.push(el('p', { class: 'small' }, CAVEAT));
+      lines.push(el('p', { class: 'small' }, el('strong', {}, 'Next: '), 'enter your running cost, or choose one of the amounts above, to see the full result.'));
     }
     v.replaceChildren(...lines);
 
@@ -191,20 +197,20 @@ boot((engine) => {
       stat('Break-even running cost', money(bca.breakEven), 'per participant per session', 'break-even'),
     ];
     if (bca.cost != null) {
-      key.push(stat('Benefit-cost ratio', bca.bcr.toFixed(2), rng(bca.ci.bcr, (x) => x.toFixed(2)), 'bcr'),
-        stat('Net benefit per year', money(bca.net), rng(bca.ci.net, money), 'net-benefit'));
+      key.push(stat('Ratio of stated value to cost', bca.bcr.toFixed(2), rng(bca.ci.bcr, (x) => x.toFixed(2)), 'bcr'),
+        stat('Stated value minus cost per year', money(bca.net), rng(bca.ci.net, money), 'net-benefit'));
     } else {
-      key.push(stat('Value to participants per year', money(bca.benefit), rng(bca.ci.benefit, money), 'value'));
+      key.push(stat('Stated value to participants per year', money(bca.benefit), rng(bca.ci.benefit, money), 'value'));
     }
     document.getElementById('bca-stats').replaceChildren(...key);
 
     const more = [
       stat('Value per participant per session', money(bca.benefitPerParticipantSession), rng(bca.ci.benefitPerParticipantSession, money)),
-      stat('Value to participants per year', money(bca.benefit), rng(bca.ci.benefit, money), 'value'),
+      stat('Stated value to participants per year', money(bca.benefit), rng(bca.ci.benefit, money), 'value'),
     ];
     if (bca.cost != null) {
       more.push(stat('Running cost per year', money(bca.cost), `${s} sessions at ${money(state.cost)}`, 'running-cost'),
-        stat('Chance benefits exceed costs', pct(bca.pPositive), 'across the uncertainty in the estimates', 'interval'));
+        stat('Chance stated value exceeds cost', pct(bca.pPositive), 'across the uncertainty in the estimates', 'interval'));
     }
     document.getElementById('more-stats').replaceChildren(...more);
     const rows = [
@@ -222,7 +228,7 @@ boot((engine) => {
     // Explanations that follow the inputs
     setContext('take-up', () => `${per100(P)} in 100 people offered it would take part, so ${whole(bca.participants)} of ${state.offered.toLocaleString('en-AU')}.`);
     setContext('break-even', () => `${money(bca.breakEven)} per participant per session (${rng(bca.ci.breakEven, money)}).`);
-    setContext('bcr', () => (bca.bcr == null ? 'enter a running cost to see the ratio.' : `${bca.bcr.toFixed(2)}: every A$1 of running cost returns ${money(bca.bcr, 2)} of value to participants.`));
+    setContext('bcr', () => (bca.bcr == null ? 'enter a running cost to see the ratio.' : `${bca.bcr.toFixed(2)}: every A$1 of running cost is matched by ${money(bca.bcr, 2)} of stated value to participants.`));
     setContext('net-benefit', () => (bca.net == null ? 'enter a running cost to see it.' : `${money(bca.net)} per year for ${state.offered.toLocaleString('en-AU')} people offered.`));
     setContext('value', () => `${money(bca.benefit)} per year in total, or ${money(bca.surplusPerOfferedSession, 2)} per person offered per session after the fee.`);
     setContext('running-cost', () => (state.cost == null ? 'no running cost entered yet.' : `${money(state.cost)} per participant per session, or ${money(bca.cost)} per year in total.`));
@@ -249,21 +255,21 @@ boot((engine) => {
     });
     const ymax = Math.min(20, Math.ceil(Math.max(...pts.map((p) => p.hi)) + 0.5));
     lineChart(document.getElementById('cost-chart'), {
-      title: 'Benefit-cost ratio by running cost', series: [{ name: 'Benefit-cost ratio', color: '#2a6bc4', band: true, points: pts }],
+      title: 'Ratio of stated value to cost, by running cost', series: [{ name: 'Ratio of stated value to cost', color: '#2a6bc4', band: true, points: pts }],
       x: [20, 200], y: [0, ymax], xTicks: [20, 50, 75, 100, 150, 200], xFormat: (v) => `$${v}`, yFormat: (v) => v.toFixed(1),
-      xLabel: 'Provider cost per participant per session (A$)', yLabel: 'Benefit-cost ratio', marker: state.cost, refY: 1, refLabel: 'Break-even',
+      xLabel: 'Provider cost per participant per session (A$)', yLabel: 'Ratio of stated value to cost', marker: state.cost, refY: 1, refLabel: 'Break-even',
     });
     const firmUpTo = pts.filter((p) => p.lo >= 1).map((p) => p.x);
     const failFrom = pts.find((p) => p.hi < 1);
     document.getElementById('cost-text').replaceChildren(el('div', { class: 'meaning' }, el('h3', {}, 'What this means'),
       el('p', {}, `The ratio falls as the running cost rises and reaches 1 at about ${money(now.breakEven)} per participant per session (95% interval ${money(now.ci.breakEven[0])} to ${money(now.ci.breakEven[1])}).`),
-      el('p', {}, `${firmUpTo.length ? `Up to about ${money(Math.max(...firmUpTo))}, benefits clearly exceed costs (green). ` : 'At none of the running costs shown do benefits clearly exceed costs. '}${failFrom ? `From about ${money(failFrom.x)}, costs clearly exceed benefits (red).` : 'Within the range shown, costs never clearly exceed benefits.'} In between, the result is uncertain (amber).`)));
+      el('p', {}, `${firmUpTo.length ? `Up to about ${money(Math.max(...firmUpTo))}, the whole 95% interval for stated value is above cost. ` : 'At none of the running costs shown is the whole 95% interval for stated value above cost. '}${failFrom ? `From about ${money(failFrom.x)}, the whole interval is below cost.` : 'Within the range shown, the interval is never wholly below cost.'} In between, the interval includes 1. Because stated value is counted only up to A$50 per session, these thresholds are on the cautious side.`)));
 
     const fees = Array.from({ length: 26 }, (_, i) => 2 * i);
     const fc = document.getElementById('fee-chart');
     const ft = document.getElementById('fee-text');
     if (state.cost == null) {
-      fc.replaceChildren(el('p', { class: 'note' }, 'Enter a running cost to see how net benefit changes with the fee.'));
+      fc.replaceChildren(el('p', { class: 'note' }, 'Enter a running cost to see how stated value minus cost changes with the fee.'));
       ft.replaceChildren();
       return;
     }
@@ -275,18 +281,18 @@ boot((engine) => {
     const lo = Math.min(...fp.map((p) => p.lo)), hi = Math.max(...fp.map((p) => p.hi));
     const pad = (hi - lo) * 0.08 || 1;
     lineChart(fc, {
-      title: 'Net benefit per year by fee', series: [{ name: 'Net benefit per year', color: '#18a078', band: true, points: fp }],
+      title: 'Stated value minus cost per year, by fee', series: [{ name: 'Stated value minus cost per year', color: '#18a078', band: true, points: fp }],
       x: [0, 50], y: [lo - pad, hi + pad], xTicks: [0, 5, 10, 20, 30, 40, 50], xFormat: (v) => (v === 0 ? 'Free' : `$${v}`),
       yFormat: (v) => (Math.abs(v) >= 1e6 ? `$${(v / 1e6).toFixed(1)}m` : Math.abs(v) >= 1e3 ? `$${(v / 1e3).toFixed(0)}k` : `$${v.toFixed(0)}`),
-      xLabel: 'Fee per session (A$)', yLabel: 'Net benefit per year', marker: design.price, refY: 0, refLabel: 'Zero',
+      xLabel: 'Fee per session (A$)', yLabel: 'Stated value minus cost per year', marker: design.price, refY: 0, refLabel: 'Zero',
     });
     const best = fp.reduce((a, b) => (b.y > a.y ? b : a));
     const free = fp[0], at50 = fp[fp.length - 1];
     ft.replaceChildren(el('div', { class: 'meaning' }, el('h3', {}, 'What this means'), el('p', {}, best.x === 0
-      ? `Net benefit is highest when the programme is free (${money(free.y)} per year), because a fee reduces the number of people who benefit while only moving money between participants and the provider. At A$50 per session it would be ${money(at50.y)}.`
+      ? `Stated value minus cost is highest when the programme is free (${money(free.y)} per year), because a fee reduces the number of people who benefit while only moving money between participants and the provider. At A$50 per session it would be ${money(at50.y)}.`
       : lightOf(now) !== 'green'
-        ? `Net benefit rises with the fee here only because each participant costs more to serve than the value they place on the programme, so fewer participants means a smaller loss. That points to a running cost that is too high for this design, not to a reason to charge more. Net benefit is ${money(free.y)} per year when free and ${money(at50.y)} at A$50.`
-        : `Net benefit is highest at a fee of about ${money(best.x)} per session (${money(best.y)} per year).`)));
+        ? `Stated value minus cost rises with the fee here only because each participant costs more to serve than the value they place on the programme, so fewer participants means a smaller loss. That points to a running cost that is too high for this design, not to a reason to charge more. It is ${money(free.y)} per year when free and ${money(at50.y)} at A$50.`
+        : `Stated value minus cost is highest at a fee of about ${money(best.x)} per session (${money(best.y)} per year).`)));
   }
 
   // ------------------------------------------------------------ comparison
@@ -306,25 +312,25 @@ boot((engine) => {
     ];
     if (state.cost != null) {
       rows.push(['Running cost per year', money(a.bca.cost), money(b.bca.cost)],
-        ['Net benefit per year', money(a.bca.net), money(b.bca.net)],
-        ['Benefit-cost ratio', a.bca.bcr.toFixed(2), b.bca.bcr.toFixed(2)],
-        ['Verdict', el('span', { class: `light light-${lightOf(a.bca)}` }, LIGHT_WORD[lightOf(a.bca)]), el('span', { class: `light light-${lightOf(b.bca)}` }, LIGHT_WORD[lightOf(b.bca)])]);
+        ['Stated value minus cost per year', money(a.bca.net), money(b.bca.net)],
+        ['Ratio of stated value to cost', a.bca.bcr.toFixed(2), b.bca.bcr.toFixed(2)],
+        ['Reading of the 95% interval', LIGHT_WORD[lightOf(a.bca)], LIGHT_WORD[lightOf(b.bca)]]);
     }
     const parts = [el('div', { class: 'table-scroll' }, el('table', {},
       el('thead', {}, el('tr', {}, el('th', { scope: 'col' }, ''), el('th', { scope: 'col' }, 'Your programme'), el('th', { scope: 'col' }, `Alternative: ${t.name}`))),
       el('tbody', {}, ...rows.map((r) => el('tr', {}, el('th', { scope: 'row' }, r[0]), el('td', {}, r[1]), el('td', {}, r[2]))))))];
     let result;
     if (state.cost == null) {
-      result = { level: extra > 0 ? 'green' : 'amber', text: `The alternative would reach about ${whole(Math.abs(extra))} ${extra >= 0 ? 'more' : 'fewer'} people. Enter a running cost to compare net benefits.` };
+      result = { level: extra > 0 ? 'green' : 'amber', text: `The alternative would reach about ${whole(Math.abs(extra))} ${extra >= 0 ? 'more' : 'fewer'} people. Enter a running cost to compare stated value net of cost.` };
     } else {
       const dNet = b.bca.net - a.bca.net;
       const ci = diff('net');
       const level = ci[0] > 0 ? 'green' : ci[1] < 0 ? 'red' : 'amber';
       const perExtra = extra > 0.5 ? (b.bca.cost - a.bca.cost) / extra : null;
-      result = { level, text: `Switching to the ${t.name.toLowerCase()} would change participants by ${extra >= 0 ? '+' : ''}${whole(extra)} and net benefit by ${dNet >= 0 ? '+' : ''}${money(dNet)} per year (95% interval ${money(ci[0])} to ${money(ci[1])}).${perExtra != null ? ` Each extra participant would cost ${money(perExtra)} more per year to serve.` : ''}${level === 'amber' ? ' The interval includes zero, so neither is clearly better.' : ''}` };
+      result = { level, text: `Switching to the ${t.name.toLowerCase()} would change participants by ${extra >= 0 ? '+' : ''}${whole(extra)} and stated value net of cost by ${dNet >= 0 ? '+' : ''}${money(dNet)} per year (95% interval ${money(ci[0])} to ${money(ci[1])}).${perExtra != null ? ` Each extra participant would cost ${money(perExtra)} more per year to serve.` : ''}${level === 'amber' ? ' The interval includes zero, so neither is clearly better.' : ''}` };
     }
-    parts.push(el('div', { class: `meaning meaning-${result.level}` }, el('h3', {}, 'What this means'),
-      el('p', {}, el('span', { class: `light light-${result.level}` }, result.level === 'green' ? 'Alternative is better' : result.level === 'red' ? 'Your programme is better' : 'No clear difference')),
+    parts.push(el('div', { class: 'meaning' }, el('h3', {}, 'What this means'),
+      el('p', {}, el('span', { class: 'light light-neutral' }, result.level === 'green' ? 'Alternative: higher stated value net of cost' : result.level === 'red' ? 'Your programme: higher stated value net of cost' : 'No clear difference')),
       el('p', {}, result.text)));
     box.replaceChildren(...parts);
     return result;
@@ -336,7 +342,7 @@ boot((engine) => {
     if (now.bca.bcr != null && before.bca.bcr != null) {
       const d = now.bca.net - before.bca.net;
       const level = Math.abs(d) < 1 ? 'amber' : d > 0 ? 'green' : 'red';
-      toast({ level, title, message: `Net benefit ${d >= 0 ? 'rose' : 'fell'} by ${money(Math.abs(d))} per year. The benefit-cost ratio is now ${now.bca.bcr.toFixed(2)} (${LIGHT_WORD[lightOf(now.bca)].toLowerCase()}).` });
+      toast({ level, title, message: `Stated value net of cost ${d >= 0 ? 'rose' : 'fell'} by ${money(Math.abs(d))} per year. The ratio of stated value to cost is now ${now.bca.bcr.toFixed(2)} (${LIGHT_WORD[lightOf(now.bca)].toLowerCase()}).` });
     } else {
       const d = now.bca.breakEven - before.bca.breakEven;
       const level = Math.abs(d) < 0.5 ? 'amber' : d > 0 ? 'green' : 'red';
@@ -349,12 +355,12 @@ boot((engine) => {
     if (!light) return;
     const next = light === 'green' ? { label: 'Next: test a lower value', onClick: () => goTo('#share-field') }
       : { label: 'Next: see the break-even chart', onClick: () => goTo('#sensitivity') };
-    toast({ level: light, title, message: `${LIGHT_WORD[light]}: benefit-cost ratio ${now.bca.bcr.toFixed(2)} (95% interval ${now.bca.ci.bcr[0].toFixed(2)} to ${now.bca.ci.bcr[1].toFixed(2)}).${extra ? ' ' + extra : ''}`, action: next });
+    toast({ level: 'info', title, message: `${LIGHT_WORD[light]}: ratio of stated value to cost ${now.bca.bcr.toFixed(2)} (95% interval ${now.bca.ci.bcr[0].toFixed(2)} to ${now.bca.ci.bcr[1].toFixed(2)}).${extra ? ' ' + extra : ''}`, action: next });
   }
   function tellCompare(r) {
     toast({ level: r.level, title: `Compared with the ${alt.options[alt.selectedIndex].text.toLowerCase()}`, message: r.text });
   }
 
   update();
-  if (fromUrl) toast({ level: 'info', title: 'Programme loaded from your link', message: state.cost == null ? 'Enter a running cost to see whether it passes a benefit-cost test.' : 'The verdict uses the running cost from your link.' });
+  if (fromUrl) toast({ level: 'info', title: 'Programme loaded from your link', message: state.cost == null ? 'Enter a running cost to compare stated value with cost.' : 'The result uses the running cost from your link.' });
 });

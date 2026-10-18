@@ -95,7 +95,7 @@ boot((engine) => {
       if (res.accMax.subsidy > inp.perSession + 1e-9) msgs.push(`The programme most people would take up costs ${money(yearly(res.accMax.subsidy, inp.offered))} a year in public spending, more than this budget.`);
       if (b.fee > 0) msgs.push(`A fee of ${money(b.fee, b.fee % 1 ? 2 : 0)} per session lets the budget cover a more valued design; the fee is paid by users and is already taken off their value.`);
     }
-    msgs.push('The planner compares programmes using stated preferences and CHSP unit prices plus two cost assumptions. It is a guide to trade-offs, not a cost-effectiveness analysis.');
+    msgs.push('The planner compares programmes using stated preferences and CHSP unit prices plus two cost assumptions. Several designs come close to the best, so treat the exact design as one of several good options. It is a guide to trade-offs, not a cost-effectiveness analysis.');
     meaning($('b-meaning'), b ? 'green' : 'amber', msgs);
     const plan = $('to-plan');
     if (b) plan.href = `plan.html${designQuery({ ...b.design, price: Math.round(b.fee) })}`;

@@ -1,11 +1,12 @@
 # Dementia Support Choices
 
-A public website that turns the results of an Australian discrete choice experiment on dementia support programmes into practical tools for three groups:
+A public website that presents the results of an Australian discrete choice experiment on dementia support programmes as tools for three groups. It has not yet been tested with families, carers or providers.
 
 - **Families and carers** (`families.html`): plain-language information on programme types, a short exercise to work out what matters most, a printable summary with questions to ask providers, and national helplines.
 - **Service providers and programme designers** (`plan.html`): build a programme from seven features and see predicted take-up with 95% intervals, a rating against all 1,536 designs the study allowed, a "What this means" summary that updates with every change, where the programme could improve (a traffic light for each feature with a one-click fix), how likely different people are to use it, and a side-by-side comparison.
-- **Funders, policy makers and providers** (`value.html`): a benefit-cost analysis. The value to participants is the expected consumer surplus from the choice model (logsum, Small and Rosen 1981) plus fees paid; costs use the provider cost per participant per session the user enters. Gives a traffic-light verdict (green: benefit-cost ratio interval above 1; amber: interval includes 1; red: below 1), the break-even running cost, net benefit and its 95% interval, the chance that benefits exceed costs, sensitivity to running cost, fee and the share of stated value counted, and a comparison with a second programme.
+- **Funders, policy makers and providers** (`value.html`): a screening comparison of stated value with running cost. Stated value is the area under each simulated person's acceptance curve from the fee to A$50, the highest fee in the study (a cautious, partial measure, not complete consumer surplus), plus fees paid; costs use the provider cost per participant per session the user enters. The result reports whether the 95% interval of the ratio is above 1, includes 1 or is below 1, in neutral colours, with the break-even running cost, sensitivity to running cost, fee and the share of stated value counted, and a comparison with a second programme.
 - **Policy makers and funders** (`fees.html`): take-up and price sensitivity across fees from free to A$50 per session, switching between two programmes when a fee rises, travel distance by delivery mode, and who a programme will not reach.
+- **Funders and policy makers** (`budget.html`): the programme design and fee with the highest stated value within a public budget, using CHSP national unit prices (funding benchmarks, not marginal costs), with a note on which features of the choice are robust.
 - **Glossary** (`glossary.html`): plain-language explanations of every term. The same text opens from the (i) buttons beside results, with a sentence about the programme currently on screen.
 
 All tool results come from one model, the mixed logit with a random constant for choosing no programme, which fitted the data far better than the alternatives. The supporting models (sequential, lived experience, latent class, piecewise cost) are reported on `research.html` only. Longer sections fold away (Show / Hide) to keep the tools uncluttered.
@@ -77,7 +78,7 @@ python3 -m http.server 8000
 2. Copy `model_v17.json` (and, if it changed, `model.json`) into `data/`.
 3. Run `npm test` (Node 18 or later). `node tests/check_table.mjs > tool_check_v17.csv` writes the comparison used in the Online Appendix.
 
-The `data/model_v17.json` in this release comes from a quick check of the package with 100 simulation draws; replace it with the file from the final run (2,000 draws) before publishing.
+The `data/model_v17.json` in this release is the export of the final MATLAB run (R2024b, 17 October 2026; preferred model with 2,000 draws, log-likelihood -1,900.33). `npm test` passes all 72 checks against it.
 
 ## Tests
 
